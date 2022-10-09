@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Tools for Kyutech Timetable</title>
+    <link rel="stylesheet" href="main.css" />
+</head>
+
+<body>
+    <button id="gotolivecampusbtn">Go to LiveCampus</button><br>
+    <hr>
+    <button id="getsubjectsbtn" disabled>Get Subjects</button><br>
+    <div>
+        <input type="checkbox" id="generateseventsautomatically" checked>
+        <label for="generateseventsautomatically">Generates events automatically</label>
+    </div>
+    <div id="notification">
+        <input type="checkbox" id="notificationenabled" checked>
+        <label for="notificationenabled">Notification</label><br>
+        <input type="number" id="durationnum">
+        <select name="durations" id="duration-select">
+            <option value="minutes">minutes</option>
+            <option value="hours">hours</option>
+            <option value="days">days</option>
+            <option value="weeks">weeks</option>
+        </select>
+        before
+    </div>
+    <hr>
+    <button id="signoutbtn">Sign Out</button>
+    <script src="main.js"></script>
+</body>
+
+</html>

@@ -1,6 +1,6 @@
-# <img src="public/icons/icon_48.png" width="45" align="left"> Livecampus Scraper
+# <img src="public/icons/icon_48.png" width="45" align="left"> Tools for Kyutech Timetable
 
-My Chrome Extension
+Tools for Kyutech Timetable
 
 ## Features
 

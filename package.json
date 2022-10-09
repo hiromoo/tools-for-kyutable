@@ -1,7 +1,7 @@
 {
-  "name": "livecampus-scraper",
+  "name": "tools-for-kyutech-timetable",
   "version": "0.1.0",
-  "description": "My Chrome Extension",
+  "description": "Tools for Kyutech Timetable",
   "private": true,
   "scripts": {
     "watch": "webpack --mode=development --watch --config config/webpack.config.js",
@@ -17,5 +17,12 @@
     "webpack": "^5.74.0",
     "webpack-cli": "^4.10.0",
     "webpack-merge": "^5.8.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "firebase": "^9.10.0",
+    "firebaseui": "^6.0.1",
+    "format-duration": "^2.0.0",
+    "uuid": "^9.0.0"
   }
 }
