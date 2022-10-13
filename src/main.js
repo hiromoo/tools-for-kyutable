@@ -11,6 +11,7 @@ const timetableUrl = 'https://virginia.jimu.kyutech.ac.jp/portal/jikanwariInit.d
 const firebaseApp = initFirebaseApp();
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
+const xhr = new XMLHttpRequest();
 
 let currentTab;
 let userSettings;
@@ -56,6 +57,14 @@ async function onGetSubjectsButtonClick() {
         for (const subjectSnapshot of subjectsQuerySnapshot.docs) {
             for (const eventId of subjectSnapshot.data().eventIds) {
                 await deleteDoc(doc(db, 'users', user.uid, 'events', eventId));
+                xhr.open('POST', process.env.ADMIN_URL);
+                xhr.send(JSON.stringify({
+                    idToken: await user.getIdToken(),
+                    method: 'deleteEventNotification',
+                    data: {
+                        eventId: eventId
+                    }
+                }));
             }
             await deleteDoc(subjectSnapshot.ref);
         }
@@ -64,6 +73,15 @@ async function onGetSubjectsButtonClick() {
             const events = generateEventsFromSubject(subject);
             for (const event of events) {
                 await setDoc(doc(db, 'users', user.uid, 'events', event.id), event);
+                event.startDateTime = event.startDateTime.toDate().toISOString();
+                xhr.open('POST', process.env.ADMIN_URL);
+                xhr.send(JSON.stringify({
+                    idToken: await user.getIdToken(),
+                    method: 'setEventNotification',
+                    data: {
+                        event: event
+                    }
+                }));
             }
             subject.eventIds = events.map(event => event.id);
         } else {
