@@ -150,13 +150,13 @@ async function getSubjects() {
         currentTab.id,
         { method: 'getSubjects' }
     );
-    const year = subjects[0].year;
-    const syllabusesRef = collection(db, 'syllabuses', `${year}`, 'collection');
+    const syllabusesRef = collection(db, 'syllabuses');
     for (let i = 0; i < subjects.length; i++) {
         const subject = subjects[i];
         const syllabusesQuerySnapshot = await getDocs(
             query(
                 syllabusesRef,
+                where('year', '==', subject.year),
                 where('code', '==', subject.code),
                 where('class', '==', subject.class)
             )
