@@ -225,10 +225,11 @@ function generateEventsFromSubject(subject) {
     const place = subject.place;
     const notificationTimeMinutes = subject.notificationTimeMinutes;
     const description = subject.description;
+    const year = subject.year;
     const quarter = subject.quarter;
     const weekday = subject.weekday;
     const period = subject.period;
-    const quartersDateRange = getQuartersDateRangeFromDate(new Date());
+    const quartersDateRange = userSettings.yearsQuartersDateRange[year];
     const dateRange = getDateRangeFromQuarter(quartersDateRange, quarter);
     const timeRange = userSettings.periodsTimeRange[period];
     const date = dateRange.start.toDate();
