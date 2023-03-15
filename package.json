@@ -1,7 +1,7 @@
 {
-  "name": "tools-for-kyutech-timetable",
+  "name": "tools-for-kyutable",
   "version": "0.1.0",
-  "description": "Tools for Kyutech Timetable",
+  "description": "Tools for Kyutable",
   "private": true,
   "scripts": {
     "watch": "webpack --mode=development --watch --config config/webpack.config.js",
