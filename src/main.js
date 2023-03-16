@@ -5,9 +5,10 @@ import { initFirebaseApp } from './firebaseInitializer';
 import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth';
 import { collection, deleteDoc, doc, getDoc, getDocs, getFirestore, limit, orderBy, query, setDoc, Timestamp, where } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
-import * as format from 'format-duration';
+import format from 'format-duration';
 
 const timetableUrl = 'https://virginia.jimu.kyutech.ac.jp/portal/jikanwariInit.do';
+const notificationManagerUrl = 'https://kyutable-notifications-manager.hirokimt525.repl.co';
 const firebaseApp = initFirebaseApp();
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
@@ -57,7 +58,7 @@ async function onGetSubjectsButtonClick() {
         for (const subjectSnapshot of subjectsQuerySnapshot.docs) {
             for (const eventId of subjectSnapshot.data().eventIds) {
                 await deleteDoc(doc(db, 'users', user.uid, 'events', eventId));
-                xhr.open('POST', process.env.ADMIN_URL);
+                xhr.open('POST', notificationManagerUrl);
                 xhr.send(JSON.stringify({
                     idToken: await user.getIdToken(),
                     method: 'deleteEventNotification',
@@ -70,11 +71,11 @@ async function onGetSubjectsButtonClick() {
         }
         const generatesEventsAutomatically = document.getElementById('generateseventsautomatically').checked;
         if (generatesEventsAutomatically) {
-            const events = generateEventsFromSubject(subject);
+            const events = await generateEventsFromSubject(subject);
             for (const event of events) {
                 await setDoc(doc(db, 'users', user.uid, 'events', event.id), event);
                 event.startDateTime = event.startDateTime.toDate().toISOString();
-                xhr.open('POST', process.env.ADMIN_URL);
+                xhr.open('POST', notificationManagerUrl);
                 xhr.send(JSON.stringify({
                     idToken: await user.getIdToken(),
                     method: 'setEventNotification',
@@ -219,7 +220,7 @@ function getDateRangeFromQuarter(quartersDateRange, quarter) {
     }
 }
 
-function generateEventsFromSubject(subject) {
+async function generateEventsFromSubject(subject) {
     const events = [];
     const title = subject.title;
     const place = subject.place;
@@ -229,6 +230,9 @@ function generateEventsFromSubject(subject) {
     const quarter = subject.quarter;
     const weekday = subject.weekday;
     const period = subject.period;
+    if (userSettings.yearsQuartersDateRange[year] === undefined) {
+        userSettings.yearsQuartersDateRange[year] = await getQuartersDateRange(year);
+    }
     const quartersDateRange = userSettings.yearsQuartersDateRange[year];
     const dateRange = getDateRangeFromQuarter(quartersDateRange, quarter);
     const timeRange = userSettings.periodsTimeRange[period];
@@ -265,49 +269,46 @@ function generateEventsFromSubject(subject) {
     return events;
 }
 
-async function getDefaultUserSettings() {
-    const defaultUserSettings = {
-        notificationTimeMinutes: -30,
-        periodsTimeRange: {
-            1: {
-                start: Timestamp.fromDate(new Date(1970, 0, 1, 8, 50)),
-                end: Timestamp.fromDate(new Date(1970, 0, 1, 10, 20))
-            },
-            2: {
-                start: Timestamp.fromDate(new Date(1970, 0, 1, 10, 30)),
-                end: Timestamp.fromDate(new Date(1970, 0, 1, 12, 0))
-            },
-            3: {
-                start: Timestamp.fromDate(new Date(1970, 0, 1, 13, 0)),
-                end: Timestamp.fromDate(new Date(1970, 0, 1, 14, 30))
-            },
-            4: {
-                start: Timestamp.fromDate(new Date(1970, 0, 1, 14, 40)),
-                end: Timestamp.fromDate(new Date(1970, 0, 1, 16, 10))
-            },
-            5: {
-                start: Timestamp.fromDate(new Date(1970, 0, 1, 16, 20)),
-                end: Timestamp.fromDate(new Date(1970, 0, 1, 17, 50))
-            }
+function getDefaultNotificationTimeMinutes() {
+    return -30;
+}
+
+function getDefaultPeriodsTimeRange() {
+    return {
+        1: {
+            start: Timestamp.fromDate(new Date(1970, 0, 1, 8, 50)),
+            end: Timestamp.fromDate(new Date(1970, 0, 1, 10, 20))
+        },
+        2: {
+            start: Timestamp.fromDate(new Date(1970, 0, 1, 10, 30)),
+            end: Timestamp.fromDate(new Date(1970, 0, 1, 12, 0))
+        },
+        3: {
+            start: Timestamp.fromDate(new Date(1970, 0, 1, 13, 0)),
+            end: Timestamp.fromDate(new Date(1970, 0, 1, 14, 30))
+        },
+        4: {
+            start: Timestamp.fromDate(new Date(1970, 0, 1, 14, 40)),
+            end: Timestamp.fromDate(new Date(1970, 0, 1, 16, 10))
+        },
+        5: {
+            start: Timestamp.fromDate(new Date(1970, 0, 1, 16, 20)),
+            end: Timestamp.fromDate(new Date(1970, 0, 1, 17, 50))
         }
     };
-    const yearsQuartersDateRangesRef = collection(db, 'quarters_date_range');
-    const yearsQuartersDateRangeQuerySnapshot = await getDocs(
-        query(
-            yearsQuartersDateRangesRef,
-            where('q4.end', '>=', Timestamp.fromDate(new Date())),
-            orderBy('q4.end'),
-            limit(1)
-        )
-    );
-    const yearQuartersDateRangeSnapshot = !yearsQuartersDateRangeQuerySnapshot.empty
-        ? yearsQuartersDateRangeQuerySnapshot.docs[0]
-        : null;
-    defaultUserSettings.yearsQuartersDateRange = yearQuartersDateRangeSnapshot != null
-        ? {
-            [yearQuartersDateRangeSnapshot.id]: yearQuartersDateRangeSnapshot.data()
-        } : {};
-    return defaultUserSettings;
+}
+
+async function getQuartersDateRange(year) {
+    const quartersDateRangeQuerySnapshot = await getDoc(doc(db, `quarters_date_range/${year}`));
+    return quartersDateRangeQuerySnapshot.data();
+}
+
+async function getDefaultUserSettings() {
+    return {
+        notificationTimeMinutes: getDefaultNotificationTimeMinutes(),
+        periodsTimeRange: getDefaultPeriodsTimeRange(),
+        yearsQuartersDateRange: {}
+    };
 }
 
 (() => {
