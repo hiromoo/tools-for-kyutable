@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import format from 'format-duration';
 
 const timetableUrl = 'https://virginia.jimu.kyutech.ac.jp/portal/jikanwariInit.do';
-const notificationManagerUrl = 'http://localhost:8080';
+const notificationManagerUrl = 'https://kyutable-notifications-manager.hirokimt525.repl.co';
 const firebaseApp = initFirebaseApp();
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
