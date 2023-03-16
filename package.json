@@ -1,6 +1,6 @@
 {
   "name": "tools-for-kyutable",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "description": "Tools for Kyutable",
   "private": true,
   "scripts": {
