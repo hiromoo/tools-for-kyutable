@@ -42,52 +42,69 @@ async function onGetSubjectsButtonClick() {
         return;
     }
 
+    const subjectsRef = collection(db, 'users', user.uid, 'subjects');
     for (const subject of subjects) {
         const year = subject.year;
         const quarter = subject.quarter;
-        const weekday = subject.weekday;
-        const period = subject.period;
-        const subjectsRef = collection(db, 'users', user.uid, 'subjects');
-        const subjectsQuerySnapshot = await getDocs(query(
-            subjectsRef,
-            where('year', '==', year),
-            where('quarter', '==', quarter),
-            where('weekday', '==', weekday),
-            where('period', '==', period)
-        ));
-        for (const subjectSnapshot of subjectsQuerySnapshot.docs) {
-            for (const eventId of subjectSnapshot.data().eventIds) {
-                await deleteDoc(doc(db, 'users', user.uid, 'events', eventId));
-                xhr.open('POST', notificationManagerUrl);
-                xhr.send(JSON.stringify({
-                    idToken: await user.getIdToken(),
-                    method: 'deleteEventNotification',
-                    data: {
-                        eventId: eventId
-                    }
-                }));
+        const subjectCode = subject.code;
+        const classCode = subject.class;
+        if (subject.isIntensive) {
+            const subjectsQuerySnapshot = await getDocs(query(
+                subjectsRef,
+                where('year', '==', year),
+                where('quarter', '==', quarter),
+                where('code', '==', subjectCode),
+                where('class', '==', classCode)
+            ));
+            for (const subjectSnapshot of subjectsQuerySnapshot.docs) {
+                await deleteDoc(subjectSnapshot.ref);
             }
-            await deleteDoc(subjectSnapshot.ref);
-        }
-        const generatesEventsAutomatically = document.getElementById('generateseventsautomatically').checked;
-        if (generatesEventsAutomatically) {
-            const events = await generateEventsFromSubject(subject);
-            for (const event of events) {
-                await setDoc(doc(db, 'users', user.uid, 'events', event.id), event);
-                event.startDateTime = event.startDateTime.toDate().toISOString();
-                xhr.open('POST', notificationManagerUrl);
-                xhr.send(JSON.stringify({
-                    idToken: await user.getIdToken(),
-                    method: 'setEventNotification',
-                    data: {
-                        event: event
-                    }
-                }));
-            }
-            subject.eventIds = events.map(event => event.id);
-        } else {
             subject.notificationTimeMinutes = null;
             subject.eventIds = [];
+        } else {
+            const weekday = subject.weekday;
+            const period = subject.period;
+            const subjectsQuerySnapshot = await getDocs(query(
+                subjectsRef,
+                where('year', '==', year),
+                where('quarter', '==', quarter),
+                where('weekday', '==', weekday),
+                where('period', '==', period)
+            ));
+            for (const subjectSnapshot of subjectsQuerySnapshot.docs) {
+                for (const eventId of subjectSnapshot.data().eventIds) {
+                    await deleteDoc(doc(db, 'users', user.uid, 'events', eventId));
+                    xhr.open('POST', notificationManagerUrl);
+                    xhr.send(JSON.stringify({
+                        idToken: await user.getIdToken(),
+                        method: 'deleteEventNotification',
+                        data: {
+                            eventId: eventId
+                        }
+                    }));
+                }
+                await deleteDoc(subjectSnapshot.ref);
+            }
+            const generateEvents = document.getElementById('generateevents').checked;
+            if (generateEvents) {
+                const events = await generateEventsFromSubject(subject);
+                for (const event of events) {
+                    await setDoc(doc(db, 'users', user.uid, 'events', event.id), event);
+                    event.startDateTime = event.startDateTime.toDate().toISOString();
+                    xhr.open('POST', notificationManagerUrl);
+                    xhr.send(JSON.stringify({
+                        idToken: await user.getIdToken(),
+                        method: 'setEventNotification',
+                        data: {
+                            event: event
+                        }
+                    }));
+                }
+                subject.eventIds = events.map(event => event.id);
+            } else {
+                subject.notificationTimeMinutes = null;
+                subject.eventIds = [];
+            }
         }
         await setDoc(doc(db, 'users', user.uid, 'subjects', subject.id), subject);
     }
@@ -95,7 +112,7 @@ async function onGetSubjectsButtonClick() {
     getSubjectsButton.disabled = null;
 }
 
-function onGeneratesEventsAutomaticallyCheckboxChange() {
+function onGenerateEventsCheckboxChange() {
     const notificationDiv = document.getElementById('notification');
     if (this.checked) {
         notificationDiv.style.display = 'block';
@@ -323,8 +340,8 @@ async function getDefaultUserSettings() {
             .getElementById('getsubjectsbtn')
             .addEventListener("click", onGetSubjectsButtonClick);
         document
-            .getElementById('generateseventsautomatically')
-            .addEventListener("change", onGeneratesEventsAutomaticallyCheckboxChange);
+            .getElementById('generateevents')
+            .addEventListener("change", onGenerateEventsCheckboxChange);
         document
             .getElementById('notificationenabled')
             .addEventListener("change", onNotificationEnabledCheckboxChange);
