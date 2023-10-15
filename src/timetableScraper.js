@@ -35,7 +35,7 @@ export function getSubjectsFromTimetable() {
         }
     }
     const intensiveList = document.getElementsByClassName('tableBdr')[1];
-    for (const row of [...intensiveList.rows].slice(1)) {
+    for (const row of [...intensiveList?.rows ?? []].slice(1)) {
         const subjectCell = row.cells[0];
         const subjectCode = getSubjectCodeFromCell(subjectCell);
         const classCode = getClassCodeFromCell(subjectCell);
